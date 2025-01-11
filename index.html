@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时间记录器</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    button { padding: 10px; margin: 5px 0; font-size: 16px; }
+    p { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>时间记录器</h1>
+  <div>
+    <button id="workBtn">记录工作时间</button><br>
+    <button id="playBtn">记录娱乐时间</button><br>
+    <p>工作时长: <span id="workTime">0min</span></p>
+    <p>娱乐时长: <span id="playTime">0min</span></p>
+    <p>差值 (工作-娱乐): <span id="diffTime">0min</span></p>
+  </div>
+  
+  <script>
+    // 从 localStorage 初始化事件数组
+    let events = JSON.parse(localStorage.getItem('events')) || [];
+
+    function updateDisplay() {
+      // 分别筛选工作和娱乐事件
+      let workEvents = events.filter(e => e.type === 'work');
+      let playEvents = events.filter(e => e.type === 'play');
+
+      // 计算各自总时长
+      let workSum = workEvents.reduce((sum, e) => sum + e.value, 0);
+      let playSum = playEvents.reduce((sum, e) => sum + e.value, 0);
+      let diffSum = workSum - playSum;
+
+      // 构建显示表达式
+      let workExpr = workEvents.map(e => e.value).join('+') || '0';
+      let playExpr = playEvents.map(e => e.value).join('+') || '0';
+
+      // 对差值，按照事件顺序显示“+”或“-”
+      let diffExpr = events.map(e => (e.type === 'work' ? '+' + e.value : '-' + e.value)).join('');
+      // 去除首个多余的“+”符号
+      if(diffExpr.startsWith('+')) diffExpr = diffExpr.substring(1);
+
+      // 更新页面显示内容
+      document.getElementById('workTime').textContent = `${workExpr}=${workSum}min`;
+      document.getElementById('playTime').textContent = `${playExpr}=${playSum}min`;
+      document.getElementById('diffTime').textContent = `${diffExpr}=${diffSum}min`;
+    }
+
+    document.getElementById('workBtn').addEventListener('click', () => {
+      const amount = parseFloat(prompt('你工作了多少分钟？'));
+      if (!isNaN(amount) && amount > 0) {
+        events.push({type: 'work', value: amount});
+        localStorage.setItem('events', JSON.stringify(events));
+        updateDisplay();
+      }
+    });
+
+    document.getElementById('playBtn').addEventListener('click', () => {
+      const amount = parseFloat(prompt('你娱乐了多少分钟？'));
+      if (!isNaN(amount) && amount > 0) {
+        events.push({type: 'play', value: amount});
+        localStorage.setItem('events', JSON.stringify(events));
+        updateDisplay();
+      }
+    });
+
+    updateDisplay();
+
+    // 注册 Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(registration => console.log('Service Worker 注册成功:', registration))
+        .catch(error => console.log('Service Worker 注册失败:', error));
+    }
+  </script>
+</body>
+</html>
