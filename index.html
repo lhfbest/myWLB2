@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>时间记录器</title>
+  <title>WLB记录器</title>
   <link rel="manifest" href="manifest.json" />
   <style>
     /* 全局样式：冷淡风格 */
@@ -22,8 +22,19 @@
     }
     h1 {
       color: #333;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       text-align: center;
+    }
+    /* 存款显示样式调整 */
+    #depositDisplay {
+      font-size: 18px;
+      background: #f9f9f9;
+      padding: 5px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      text-align: center;
+      margin: 0 auto 20px;
+      width: fit-content;
     }
     /* 按钮容器样式 */
     .button-container {
@@ -69,22 +80,6 @@
       font-size: 18px;
       margin: 10px 0;
     }
-    /* 单独按钮样式 */
-    #clearBtn {
-      margin-top: 40px;
-      width: 150px;
-      padding: 5px 10px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      background: #f9f9f9;
-      color: #333;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    #clearBtn:hover {
-      background: #eee;
-    }
     .timer-display {
       margin-top: 20px;
       padding: 10px;
@@ -94,6 +89,23 @@
       font-size: 16px;
       margin: 5px 0;
       color: #555;
+    }
+    /* 实时计时显示样式 */
+    .realtime-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+    .realtime-display div {
+      margin: 5px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .realtime-display .timer-icon {
+      font-size: 24px;
     }
     /* 徽章样式 */
     .badge {
@@ -119,23 +131,13 @@
       padding: 10px;
       border-top: 1px solid #ccc;
     }
-    /* 存款显示样式 */
-    #depositDisplay {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      font-size: 18px;
-      background: #f9f9f9;
-      padding: 5px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
   </style>
 </head>
 <body>
-  <div id="depositDisplay">存款: 0h 0min 0s</div>
   <div id="clock">加载时间...</div>
-  <h1>时间记录器</h1>
+  <h1>WLB记录器</h1>
+  <div id="depositDisplay">存款: 0h 0min 0s</div>
+
   <div class="button-container">
     <!-- 计时控制组 -->
     <div class="button-group control-group">
@@ -153,13 +155,27 @@
       <button id="viewStatsBtn">查看统计</button>
     </div>
   </div>
+
+  <!-- 新增实时计时显示区域 -->
+  <div class="realtime-display">
+    <div id="workRealTime" style="display: none;">
+      <span class="timer-icon">⏰</span>
+      <span>工作中：0h 0min 0s</span>
+    </div>
+    <div id="playRealTime" style="display: none;">
+      <span class="timer-icon">🎮</span>
+      <span>娱乐中：0h 0min 0s</span>
+    </div>
+  </div>
+
   <div class="timer-display">
     <p>工作时长:<br><span id="workTime">0h 0min 0s</span></p>
     <p>娱乐时长:<br><span id="playTime">0h 0min 0s</span></p>
     <p>利润:<br><span id="profitTime">0h 0min 0s</span></p>
-    <div id="currentTimers">
-      <p id="currentWorkTimer" style="display: none;">工作中：0h 0min 0s</p>
-      <p id="currentPlayTimer" style="display: none;">娱乐中：0h 0min 0s</p>
+    <div id="currentTimers" style="display:none;">
+      <!-- 隐藏原有的实时计时显示元素 -->
+      <p id="currentWorkTimer">工作中：0h 0min 0s</p>
+      <p id="currentPlayTimer">娱乐中：0h 0min 0s</p>
     </div>
   </div>
   
@@ -180,8 +196,6 @@
     <p>存款成就徽章</p>
     <div id="diffBadges"></div>
   </div>
-  
-  <button id="clearBtn">一键清空</button>
   
   <script>
     function updateClock() {
@@ -225,7 +239,6 @@
       let surplusEvents = events.filter(e => e.type === 'surplus');
       let workSum = workEvents.reduce((sum, e) => sum + e.value, 0);
       let playSum = playEvents.reduce((sum, e) => sum + e.value, 0);
-      let surplusSum = surplusEvents.reduce((sum, e) => sum + e.value, 0);
       let profit = workSum - playSum;
       
       let workExpr = workEvents.length === 0 ? '0h 0min 0s' : workEvents.map(e => '+' + formatTime(e.value)).join('<br>');
@@ -456,7 +469,7 @@
         let hours = Math.floor(totalSeconds / 3600);
         let minutes = Math.floor((totalSeconds % 3600) / 60);
         let seconds = totalSeconds % 60;
-        document.getElementById('currentWorkTimer').textContent = `工作中：${hours}h ${minutes}min ${seconds}s`;
+        document.getElementById('workRealTime').textContent = `⏰ 工作中：${hours}h ${minutes}min ${seconds}s`;
       }
     }
 
@@ -467,7 +480,7 @@
         let hours = Math.floor(totalSeconds / 3600);
         let minutes = Math.floor((totalSeconds % 3600) / 60);
         let seconds = totalSeconds % 60;
-        document.getElementById('currentPlayTimer').textContent = `娱乐中：${hours}h ${minutes}min ${seconds}s`;
+        document.getElementById('playRealTime').textContent = `🎮 娱乐中：${hours}h ${minutes}min ${seconds}s`;
       }
     }
 
@@ -480,7 +493,7 @@
         localStorage.setItem('events', JSON.stringify(events));
         document.getElementById('startWorkBtn').disabled = true;
         document.getElementById('stopWorkBtn').disabled = false;
-        document.getElementById('currentWorkTimer').style.display = 'block';
+        document.getElementById('workRealTime').style.display = 'flex';
         updateWorkTimer();
         workInterval = setInterval(updateWorkTimer, 1000);
         workRecordInterval = setInterval(() => {
@@ -503,8 +516,8 @@
         workTimerStart = null;
         document.getElementById('startWorkBtn').disabled = false;
         document.getElementById('stopWorkBtn').disabled = true;
-        document.getElementById('currentWorkTimer').style.display = 'none';
-        document.getElementById('currentWorkTimer').textContent = '工作中：0h 0min 0s';
+        document.getElementById('workRealTime').style.display = 'none';
+        document.getElementById('workRealTime').textContent = '⏰ 工作中：0h 0min 0s';
       }
     });
 
@@ -517,7 +530,7 @@
         localStorage.setItem('events', JSON.stringify(events));
         document.getElementById('startPlayBtn').disabled = true;
         document.getElementById('stopPlayBtn').disabled = false;
-        document.getElementById('currentPlayTimer').style.display = 'block';
+        document.getElementById('playRealTime').style.display = 'flex';
         updatePlayTimer();
         playInterval = setInterval(updatePlayTimer, 1000);
         playRecordInterval = setInterval(() => {
@@ -540,34 +553,8 @@
         playTimerStart = null;
         document.getElementById('startPlayBtn').disabled = false;
         document.getElementById('stopPlayBtn').disabled = true;
-        document.getElementById('currentPlayTimer').style.display = 'none';
-        document.getElementById('currentPlayTimer').textContent = '娱乐中：0h 0min 0s';
-      }
-    });
-
-    document.getElementById('clearBtn').addEventListener('click', () => {
-      if(confirm("确认要清空所有记录吗？")) {
-        events = [];
-        localStorage.removeItem('events');
-        updateDisplay();
-        if(workTimerStart !== null) {
-          clearInterval(workInterval);
-          clearInterval(workRecordInterval);
-          workTimerStart = null;
-          document.getElementById('startWorkBtn').disabled = false;
-          document.getElementById('stopWorkBtn').disabled = true;
-          document.getElementById('currentWorkTimer').style.display = 'none';
-          document.getElementById('currentWorkTimer').textContent = '工作中：0h 0min 0s';
-        }
-        if(playTimerStart !== null) {
-          clearInterval(playInterval);
-          clearInterval(playRecordInterval);
-          playTimerStart = null;
-          document.getElementById('startPlayBtn').disabled = false;
-          document.getElementById('stopPlayBtn').disabled = true;
-          document.getElementById('currentPlayTimer').style.display = 'none';
-          document.getElementById('currentPlayTimer').textContent = '娱乐中：0h 0min 0s';
-        }
+        document.getElementById('playRealTime').style.display = 'none';
+        document.getElementById('playRealTime').textContent = '🎮 娱乐中：0h 0min 0s';
       }
     });
 
